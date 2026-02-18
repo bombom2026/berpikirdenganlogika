@@ -16,6 +16,8 @@
       --success: #16a34a;
       --danger: #ef4444;
       --glass-blur: 10px;
+      --select-text-dark: #071028; /* warna teks saat dropdown putih */
+      --select-text-light: #eaf2ff; /* warna teks normal di select */
     }
     html,body{height:100%;margin:0;font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,"Helvetica Neue",Arial;}
     body{
@@ -61,16 +63,39 @@
     }
 
     label{display:block;font-size:13px;color:var(--muted);margin-bottom:6px}
+
+    /* Input & select base styles (keep visual look) */
     input[type="text"], input[type="number"], select, textarea{
       width:100%;
       padding:10px 12px;
       border-radius:8px;
       border:1px solid rgba(255,255,255,0.06);
       background: rgba(255,255,255,0.02);
-      color: #eaf2ff;
+      color: var(--select-text-light);
       outline:none;
       box-sizing:border-box;
       font-size:14px;
+      -webkit-appearance: none;
+      -moz-appearance: none;
+      appearance: none;
+    }
+
+    /* --- Fix for dropdown white-background issue ---
+       Ensure option text is dark when the native dropdown renders with white background.
+       Many browsers ignore complex styling for <option>, but setting option color/background
+       and select:focus color helps most desktop browsers.
+    */
+    select option {
+      color: var(--select-text-dark);
+      background: #ffffff;
+    }
+    /* When the select is opened or focused, force the displayed text color to dark so it remains readable on white native backgrounds */
+    select:focus, select:active, select:-moz-focusring {
+      color: var(--select-text-dark);
+    }
+    /* Keep placeholder / default look when not focused */
+    select:not(:focus) {
+      color: var(--select-text-light);
     }
 
     .row{display:flex;gap:12px}
@@ -314,9 +339,9 @@
       });
 
       // helper to fill select
-      function fill(selectEl, items){
+      function fill(selectEl, items, placeholder){
         const cur = selectEl.value;
-        selectEl.innerHTML = '<option value="">-- pilih --</option>';
+        selectEl.innerHTML = `<option value="">${placeholder}</option>`;
         Array.from(items).sort((a,b)=>a.localeCompare(b, undefined, {sensitivity:'base'})).forEach(it=>{
           const opt = document.createElement('option');
           opt.value = it;
@@ -330,9 +355,9 @@
         }
       }
 
-      fill(jenisEl, jenisSet);
-      fill(kotaEl, kotaSet);
-      fill(productEl, productSet);
+      fill(jenisEl, jenisSet, '-- pilih jenis truk --');
+      fill(kotaEl, kotaSet, '-- pilih kota tujuan --');
+      fill(productEl, productSet, '-- pilih product --');
     }
 
     // Load JSON from pasted text
