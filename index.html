@@ -1,0 +1,575 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Minimum Charge Status Checker</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root{
+      --bg:#071028;
+      --card-bg: rgba(255,255,255,0.04);
+      --glass-border: rgba(255,255,255,0.08);
+      --muted: #9fb0c8;
+      --accent1: #7c3aed;
+      --accent2: #06b6d4;
+      --success: #16a34a;
+      --danger: #ef4444;
+      --glass-blur: 10px;
+    }
+    html,body{height:100%;margin:0;font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,"Helvetica Neue",Arial;}
+    body{
+      background:
+        radial-gradient(800px 400px at 10% 10%, rgba(124,58,237,0.08), transparent),
+        radial-gradient(700px 350px at 90% 90%, rgba(6,182,212,0.06), transparent),
+        var(--bg);
+      color:#e6f0fb;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      padding:28px;
+      box-sizing:border-box;
+    }
+
+    .wrap{
+      width:100%;
+      max-width:1100px;
+      border-radius:14px;
+      padding:22px;
+      background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+      box-shadow: 0 12px 40px rgba(2,6,23,0.6);
+      border:1px solid rgba(255,255,255,0.03);
+      backdrop-filter: blur(var(--glass-blur));
+    }
+
+    header{display:flex;align-items:center;justify-content:space-between;gap:12px}
+    header h1{margin:0;font-size:18px}
+    header p{margin:0;color:var(--muted);font-size:13px}
+
+    .grid{
+      display:grid;
+      grid-template-columns: 1fr 420px;
+      gap:18px;
+      margin-top:18px;
+    }
+
+    .panel{
+      background: var(--card-bg);
+      border:1px solid var(--glass-border);
+      border-radius:12px;
+      padding:14px;
+    }
+
+    label{display:block;font-size:13px;color:var(--muted);margin-bottom:6px}
+    input[type="text"], input[type="number"], select, textarea{
+      width:100%;
+      padding:10px 12px;
+      border-radius:8px;
+      border:1px solid rgba(255,255,255,0.06);
+      background: rgba(255,255,255,0.02);
+      color: #eaf2ff;
+      outline:none;
+      box-sizing:border-box;
+      font-size:14px;
+    }
+
+    .row{display:flex;gap:12px}
+    .col{flex:1}
+
+    .btn{
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      padding:10px 14px;
+      border-radius:10px;
+      border:none;
+      cursor:pointer;
+      font-weight:700;
+      color:#071028;
+      background:linear-gradient(90deg,var(--accent1),var(--accent2));
+      box-shadow: 0 8px 20px rgba(6,182,212,0.08);
+    }
+    .btn.secondary{
+      background:transparent;
+      color:#e6f0fb;
+      border:1px solid rgba(255,255,255,0.06);
+      font-weight:700;
+    }
+    .btn.danger{
+      background: linear-gradient(90deg,#fb7185,#ef4444);
+      color:white;
+    }
+
+    .small{font-size:13px;color:var(--muted)}
+    pre#output{white-space:pre-wrap;word-break:break-word;max-height:260px;overflow:auto;padding:10px;border-radius:8px;background:rgba(0,0,0,0.12);color:#dbeafe;margin:0}
+
+    .status{
+      margin-top:12px;
+      padding:14px;
+      border-radius:10px;
+      font-weight:800;
+      text-align:center;
+      font-size:16px;
+    }
+    .status.aman{background:linear-gradient(90deg, rgba(34,197,94,0.12), rgba(34,197,94,0.06)); color:var(--success); border:1px solid rgba(34,197,94,0.12)}
+    .status.tara{background:linear-gradient(90deg, rgba(239,68,68,0.12), rgba(239,68,68,0.06)); color:var(--danger); border:1px solid rgba(239,68,68,0.12)}
+
+    .meta{display:flex;gap:10px;flex-wrap:wrap;margin-top:12px}
+    .meta .item{flex:1;min-width:140px;background:rgba(255,255,255,0.02);padding:10px;border-radius:8px;border:1px solid rgba(255,255,255,0.03)}
+    .meta .item b{display:block;font-size:18px}
+
+    footer{margin-top:16px;display:flex;justify-content:space-between;align-items:center;gap:12px}
+    .hint{font-size:13px;color:var(--muted)}
+
+    @media (max-width:980px){
+      .grid{grid-template-columns:1fr;}
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap" role="main">
+    <header>
+      <div>
+        <h1>MINIMUM CHARGE STATUS CHECKING</h1>
+        <p class="small">Local Cargo Delivery — isi data dengan benar dan teliti</p>
+      </div>
+      <div class="small">Auto-load local <code>data-detail.json</code> jika ada; fallback upload/paste</div>
+    </header>
+
+    <div class="grid">
+      <!-- Left: Controls -->
+      <div>
+        <div class="panel">
+          <label class="small">Data source (prioritas: local file)</label>
+          <div style="display:flex;gap:8px;align-items:center">
+            <button id="tryAutoBtn" class="btn secondary" title="Coba load data-detail.json dari folder">Try auto-load local file</button>
+            <input id="jsonFile" type="file" accept=".json" style="flex:1" />
+          </div>
+
+          <div style="height:10px"></div>
+          <label for="jsonText">atau paste JSON (data-detail)</label>
+          <textarea id="jsonText" rows="6" placeholder='Paste JSON array di sini jika tidak ada file lokal'></textarea>
+
+          <hr style="border:none;height:1px;background:rgba(255,255,255,0.03);margin:12px 0">
+
+          <label for="qty">Quantity Cargo (kg)</label>
+          <input id="qty" type="number" min="1" value="19000" />
+
+          <div style="height:10px"></div>
+          <div class="row">
+            <div class="col">
+              <label for="jenis">Jenis Truk</label>
+              <select id="jenis"><option value="">-- pilih jenis truk --</option></select>
+            </div>
+            <div class="col">
+              <label for="product">Product</label>
+              <select id="product"><option value="">-- pilih product --</option></select>
+            </div>
+          </div>
+
+          <div style="height:10px"></div>
+          <label for="kota">Kota Tujuan</label>
+          <select id="kota"><option value="">-- pilih kota tujuan --</option></select>
+
+          <div style="height:10px"></div>
+          <label for="kurs">Kurs Dollar (IDR per USD)</label>
+          <input id="kurs" type="number" min="1" value="16000" />
+
+          <div style="height:14px"></div>
+          <div style="display:flex;gap:10px">
+            <button id="checkBtn" class="btn">CHECK STATUS</button>
+            <button id="resetBtn" class="btn secondary">RESET</button>
+            <button id="downloadBtn" class="btn secondary">DOWNLOAD RESULT</button>
+          </div>
+
+          <div style="height:12px"></div>
+          <div id="message" class="small hint">Menunggu data. Klik "Try auto-load local file" atau upload/paste JSON.</div>
+        </div>
+      </div>
+
+      <!-- Right: Output -->
+      <div>
+        <div class="panel">
+          <h3 style="margin:0 0 8px 0">Hasil Perhitungan</h3>
+
+          <div id="resultArea">
+            <div class="meta" id="metaBoxes" style="display:none">
+              <div class="item"><span class="small">Selisih (kg)</span><b id="selisihVal">-</b></div>
+              <div class="item"><span class="small">Total Selisih Biaya (IDR)</span><b id="totalSelisihVal">-</b></div>
+              <div class="item"><span class="small">USD Total</span><b id="usdTotalVal">-</b></div>
+              <div class="item"><span class="small">USD per Metrik Ton</span><b id="usdPerTonVal">-</b></div>
+            </div>
+
+            <div id="chargeBox" style="margin-top:12px;display:none">
+              <div class="small">Charge referensi (dari data-detail.json)</div>
+              <div style="margin-top:6px"><b id="chargeVal">-</b></div>
+            </div>
+
+            <div id="statusBox" style="margin-top:12px;display:none">
+              <div id="status" class="status">-</div>
+            </div>
+
+            <div style="margin-top:12px">
+              <div class="small">Raw match record</div>
+              <pre id="output">Belum ada record yang dicocokkan.</pre>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <footer>
+      <div class="hint">Pastikan field Jenis Truk, Kota Tujuan, dan Product sesuai dengan data JSON (case-insensitive).</div>
+      <div style="display:flex;gap:8px">
+        <button id="loadSample" class="btn secondary">Load contoh JSON</button>
+      </div>
+    </footer>
+  </div>
+
+  <script>
+    // State
+    let dataDetail = null;
+    let lastResult = null;
+
+    // Elements
+    const tryAutoBtn = document.getElementById('tryAutoBtn');
+    const jsonFile = document.getElementById('jsonFile');
+    const jsonText = document.getElementById('jsonText');
+    const checkBtn = document.getElementById('checkBtn');
+    const resetBtn = document.getElementById('resetBtn');
+    const downloadBtn = document.getElementById('downloadBtn');
+    const loadSample = document.getElementById('loadSample');
+
+    const qtyEl = document.getElementById('qty');
+    const jenisEl = document.getElementById('jenis');
+    const kotaEl = document.getElementById('kota');
+    const productEl = document.getElementById('product');
+    const kursEl = document.getElementById('kurs');
+
+    const message = document.getElementById('message');
+    const output = document.getElementById('output');
+    const selisihVal = document.getElementById('selisihVal');
+    const totalSelisihVal = document.getElementById('totalSelisihVal');
+    const usdTotalVal = document.getElementById('usdTotalVal');
+    const usdPerTonVal = document.getElementById('usdPerTonVal');
+    const chargeVal = document.getElementById('chargeVal');
+    const metaBoxes = document.getElementById('metaBoxes');
+    const chargeBox = document.getElementById('chargeBox');
+    const statusBox = document.getElementById('statusBox');
+    const statusEl = document.getElementById('status');
+
+    // Helpers
+    function fmt(num){
+      if(num === null || num === undefined || isNaN(num)) return '-';
+      return new Intl.NumberFormat('en-US', {maximumFractionDigits:2}).format(num);
+    }
+    function fmtInt(num){
+      if(num === null || num === undefined || isNaN(num)) return '-';
+      return new Intl.NumberFormat('en-US').format(Math.round(num));
+    }
+
+    function normalizeKey(obj, keys){
+      for(const k of keys){
+        if(k in obj) return obj[k];
+      }
+      return undefined;
+    }
+
+    function setMessage(txt){
+      message.textContent = txt;
+    }
+
+    // Auto-load local JSON if exists (fetch from same folder)
+    async function tryAutoLoadLocalJson(){
+      try {
+        const resp = await fetch('./data-detail.json', {cache: "no-store"});
+        if(!resp.ok) throw new Error('HTTP ' + resp.status);
+        const parsed = await resp.json();
+        if(!Array.isArray(parsed)) throw new Error('JSON harus array objek');
+        dataDetail = parsed;
+        setMessage('data-detail.json otomatis dimuat (' + parsed.length + ' record).');
+        output.textContent = 'JSON loaded from local file. Silakan pilih dropdown dan klik CHECK STATUS.';
+        populateDropdowns();
+        return true;
+      } catch (err) {
+        setMessage('Auto-load gagal: ' + err.message + '. Silakan upload atau paste JSON.');
+        return false;
+      }
+    }
+
+    // Populate dropdowns from dataDetail
+    function populateDropdowns(){
+      if(!dataDetail) return;
+      const jenisSet = new Set();
+      const kotaSet = new Set();
+      const productSet = new Set();
+
+      dataDetail.forEach(r=>{
+        const rJenis = (r['Jenis Kendaraan'] || r['JenisKendaraan'] || r['Jenis'] || '').toString().trim();
+        const rKota = (r['Transportasi'] || r['Transportasi'] || r['Kota'] || r['Area'] || '').toString().trim();
+        const rProd = (r['Product Group'] || r['ProductGroup'] || r['Product'] || '').toString().trim();
+        if(rJenis) jenisSet.add(rJenis);
+        if(rKota) kotaSet.add(rKota);
+        if(rProd) productSet.add(rProd);
+      });
+
+      // helper to fill select
+      function fill(selectEl, items){
+        const cur = selectEl.value;
+        selectEl.innerHTML = '<option value="">-- pilih --</option>';
+        Array.from(items).sort((a,b)=>a.localeCompare(b, undefined, {sensitivity:'base'})).forEach(it=>{
+          const opt = document.createElement('option');
+          opt.value = it;
+          opt.textContent = it;
+          selectEl.appendChild(opt);
+        });
+        // try restore previous
+        if(cur){
+          const found = Array.from(selectEl.options).find(o=>o.value.toLowerCase() === cur.toLowerCase());
+          if(found) selectEl.value = found.value;
+        }
+      }
+
+      fill(jenisEl, jenisSet);
+      fill(kotaEl, kotaSet);
+      fill(productEl, productSet);
+    }
+
+    // Load JSON from pasted text
+    function loadJsonFromText(text){
+      try{
+        const parsed = JSON.parse(text);
+        if(!Array.isArray(parsed)) throw new Error('JSON harus berupa array objek');
+        dataDetail = parsed;
+        setMessage('JSON berhasil dimuat (' + parsed.length + ' record).');
+        output.textContent = 'JSON loaded. Silakan pilih dropdown dan klik CHECK STATUS.';
+        populateDropdowns();
+        return true;
+      }catch(err){
+        setMessage('Error parsing JSON: ' + err.message);
+        return false;
+      }
+    }
+
+    // File upload handler
+    jsonFile.addEventListener('change', (e)=>{
+      const f = e.target.files[0];
+      if(!f) return;
+      const reader = new FileReader();
+      reader.onload = function(ev){
+        const txt = ev.target.result;
+        if(loadJsonFromText(txt)){
+          jsonText.value = '';
+        }
+      };
+      reader.readAsText(f, 'utf-8');
+    });
+
+    // Try auto-load button
+    tryAutoBtn.addEventListener('click', async ()=>{
+      await tryAutoLoadLocalJson();
+    });
+
+    // Paste JSON change
+    jsonText.addEventListener('change', ()=>{
+      const txt = jsonText.value.trim();
+      if(txt) loadJsonFromText(txt);
+    });
+
+    // Sample data for quick testing
+    loadSample.addEventListener('click', ()=>{
+      const sample = [
+        {"Tambahan":"BANDUNGPAPERTR01","Product Group":"PAPER","Transportasi":"BANDUNG","Jenis Kendaraan":"TR01","Maksimal Tonase":22000,"Rate":165,"Area":"Jabodetabek","Charge":1.3},
+        {"Tambahan":"BANDUNGPAPERROLTR01","Product Group":"PAPERROL","Transportasi":"BANDUNG","Jenis Kendaraan":"TR01","Maksimal Tonase":22000,"Rate":165,"Area":"Jabodetabek","Charge":1.5},
+        {"Tambahan":"BALARAJAPAPERROLTR01","Product Group":"PAPERROL","Transportasi":"BALARAJA","Jenis Kendaraan":"TR01","Maksimal Tonase":8300,"Rate":83,"Area":"Jabodetabek","Charge":1.2}
+      ];
+      dataDetail = sample;
+      setMessage('Contoh JSON dimuat (' + sample.length + ' record).');
+      output.textContent = 'Contoh JSON loaded. Silakan pilih dropdown dan klik CHECK STATUS.';
+      populateDropdowns();
+    });
+
+    // Matching logic with fallbacks
+    function findRecord(jenis, kota, product){
+      if(!dataDetail) return null;
+      const j = (jenis||'').toString().trim().toLowerCase();
+      const k = (kota||'').toString().trim().toLowerCase();
+      const p = (product||'').toString().trim().toLowerCase();
+
+      // exact match on all three
+      let rec = dataDetail.find(r=>{
+        const rJenis = (r['Jenis Kendaraan'] || r['JenisKendaraan'] || r['Jenis'] || '').toString().trim().toLowerCase();
+        const rKota = (r['Transportasi'] || r['Transportasi'] || r['Kota'] || r['Area'] || '').toString().trim().toLowerCase();
+        const rProd = (r['Product Group'] || r['ProductGroup'] || r['Product'] || '').toString().trim().toLowerCase();
+        return rJenis === j && rKota === k && rProd === p;
+      });
+
+      if(!rec){
+        // jenis + kota
+        rec = dataDetail.find(r=>{
+          const rJenis = (r['Jenis Kendaraan'] || r['JenisKendaraan'] || r['Jenis'] || '').toString().trim().toLowerCase();
+          const rKota = (r['Transportasi'] || r['Transportasi'] || r['Kota'] || r['Area'] || '').toString().trim().toLowerCase();
+          return rJenis === j && rKota === k;
+        });
+      }
+      if(!rec){
+        // jenis + product
+        rec = dataDetail.find(r=>{
+          const rJenis = (r['Jenis Kendaraan'] || r['JenisKendaraan'] || r['Jenis'] || '').toString().trim().toLowerCase();
+          const rProd = (r['Product Group'] || r['ProductGroup'] || r['Product'] || '').toString().trim().toLowerCase();
+          return rJenis === j && rProd === p;
+        });
+      }
+      if(!rec){
+        // jenis only
+        rec = dataDetail.find(r=>{
+          const rJenis = (r['Jenis Kendaraan'] || r['JenisKendaraan'] || r['Jenis'] || '').toString().trim().toLowerCase();
+          return rJenis === j;
+        });
+      }
+      return rec || null;
+    }
+
+    // Main check
+    checkBtn.addEventListener('click', ()=>{
+      // ensure data loaded
+      if(!dataDetail){
+        const txt = jsonText.value.trim();
+        if(txt){
+          if(!loadJsonFromText(txt)) return;
+        } else {
+          setMessage('Belum ada data JSON. Letakkan data-detail.json di folder yang sama atau upload/paste JSON.');
+          return;
+        }
+      }
+
+      const qty = Number(qtyEl.value) || 0;
+      const jenis = jenisEl.value.trim();
+      const kota = kotaEl.value.trim();
+      const product = productEl.value.trim();
+      const kurs = Number(kursEl.value) || 1;
+
+      if(!qty || !jenis || !kota || !product){
+        setMessage('Lengkapi semua input: qty, jenis truk, kota tujuan, product.');
+        return;
+      }
+
+      const rec = findRecord(jenis, kota, product);
+      if(!rec){
+        setMessage('Tidak ditemukan record yang cocok di data-detail.json.');
+        output.textContent = 'No matching record. Pastikan Jenis Truk, Kota, dan Product sesuai.';
+        metaBoxes.style.display = 'none';
+        chargeBox.style.display = 'none';
+        statusBox.style.display = 'none';
+        return;
+      }
+
+      // Normalize fields
+      const maksRaw = normalizeKey(rec, ['Maksimal Tonase','MaksimalTonase','Maksimal','Maks Tonase','MaksimalTonase']);
+      const rateRaw = normalizeKey(rec, ['Rate','Tarif','rate']);
+      const chargeRaw = normalizeKey(rec, ['Charge','CHARGE','charge']);
+
+      const maks = Number(maksRaw) || 0; // assume kg
+      const rate = Number(rateRaw) || 0;
+      const charge = Number(chargeRaw) || 0;
+
+      // Compute selisih only if qty < maks
+      let selisih = 0;
+      if(qty < maks) selisih = maks - qty;
+      else selisih = 0;
+
+      const totalSelisihBiaya = selisih * rate; // IDR
+      const usdTotal = totalSelisihBiaya / kurs;
+      const qtyMetricTon = qty / 1000;
+      const usdPerMetrikTon = qtyMetricTon > 0 ? (usdTotal / qtyMetricTon) : 0;
+
+      // Determine status
+      let status = 'AMAN';
+      if(usdPerMetrikTon > charge) status = 'TARA';
+      else status = 'AMAN';
+
+      // Save last result
+      lastResult = {
+        input: { qty, jenis, kota, product, kurs },
+        matchedRecord: rec,
+        computed: {
+          maks, rate, charge,
+          selisih, totalSelisihBiaya, usdTotal, usdPerMetrikTon,
+          status
+        },
+        timestamp: new Date().toISOString()
+      };
+
+      // Display
+      metaBoxes.style.display = 'flex';
+      chargeBox.style.display = 'block';
+      statusBox.style.display = 'block';
+
+      selisihVal.textContent = fmtInt(selisih) + ' kg';
+      totalSelisihVal.textContent = 'IDR ' + fmtInt(totalSelisihBiaya);
+      usdTotalVal.textContent = 'USD ' + fmt(usdTotal);
+      usdPerTonVal.textContent = 'USD ' + fmt(usdPerMetrikTon) + ' / metric ton';
+      chargeVal.textContent = (charge ? 'USD ' + fmt(charge) + ' / metric ton' : '-');
+
+      statusEl.className = 'status ' + (status === 'TARA' ? 'tara' : 'aman');
+      statusEl.textContent = status === 'TARA' ? 'Status TARA' : 'Status AMAN';
+
+      output.textContent = JSON.stringify(rec, null, 2);
+      setMessage('Perhitungan selesai. Lihat hasil di panel kanan.');
+    });
+
+    // Reset
+    resetBtn.addEventListener('click', ()=>{
+      qtyEl.value = '';
+      jenisEl.selectedIndex = 0;
+      kotaEl.selectedIndex = 0;
+      productEl.selectedIndex = 0;
+      kursEl.value = '16000';
+      jsonFile.value = '';
+      jsonText.value = '';
+      dataDetail = null;
+      lastResult = null;
+      message.textContent = 'Reset selesai. Silakan load data-detail.json atau paste JSON.';
+      output.textContent = 'Belum ada record yang dicocokkan.';
+      metaBoxes.style.display = 'none';
+      chargeBox.style.display = 'none';
+      statusBox.style.display = 'none';
+      // clear dropdowns
+      jenisEl.innerHTML = '<option value="">-- pilih jenis truk --</option>';
+      kotaEl.innerHTML = '<option value="">-- pilih kota tujuan --</option>';
+      productEl.innerHTML = '<option value="">-- pilih product --</option>';
+    });
+
+    // Download result
+    downloadBtn.addEventListener('click', ()=>{
+      if(!lastResult){
+        setMessage('Belum ada hasil untuk di-download. Lakukan CHECK STATUS terlebih dahulu.');
+        return;
+      }
+      const blob = new Blob([JSON.stringify(lastResult, null, 2)], {type:'application/json'});
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'result-charge.json';
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+      setMessage('File result-charge.json berhasil diunduh.');
+    });
+
+    // Try auto-load on DOM ready
+    document.addEventListener('DOMContentLoaded', ()=>{
+      // attempt auto-load silently
+      tryAutoLoadLocalJson();
+    });
+
+    // Allow Enter to trigger check
+    [qtyEl, jenisEl, kotaEl, productEl, kursEl].forEach(el=>{
+      el.addEventListener('keydown', (e)=>{
+        if(e.key === 'Enter') checkBtn.click();
+      });
+    });
+  </script>
+</body>
+</html>
